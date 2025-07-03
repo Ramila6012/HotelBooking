@@ -3,6 +3,9 @@ package com.springboot.hotelbooking.controller;
 import com.springboot.hotelbooking.entity.Customer;
 import com.springboot.hotelbooking.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -15,15 +18,32 @@ public class HotelController {
     @Autowired
     private CustomerService service;
 
+    //201 CREATED
     @PostMapping("/addCustomer")
-    public String createuser(@RequestBody Customer customer){
+    public ResponseEntity<String> createuser(@RequestBody Customer customer){
         service.addCustomer(customer);
-        return "customer with" + customer.getName() + " added";
+        String message = "customer with " + customer.getName() + " added";
+        return new ResponseEntity<>(message,HttpStatus.CREATED);
     }
 
     @GetMapping("/getCustomer")
-    public List<Customer> getCustomers(){
-        return service.getcustomers();
+    public ResponseEntity<List<Customer>> getCustomers(){
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("X-app-name", "CustomerService");
+
+        return ResponseEntity.ok()
+                .header(String.valueOf(httpHeaders))
+                .body(service.getcustomers());
+
+    }
+
+    @GetMapping("/getCustomer/{id}")
+    public ResponseEntity<Customer> getCustomer(@PathVariable int id){
+
+        Optional<Customer> customer = service.getCustomerById(id);
+
+        return customer.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
 
     }
 
